@@ -1,0 +1,174 @@
+SELECT COUNT(*)  FROM `project-leducthinh-2024.DA04_K300.laptop_price` 
+-- 1273
+
+
+SELECT *  FROM `project-leducthinh-2024.DA04_K300.laptop_price` 
+-- [{
+--   "Company": "Asus",
+--   "TypeName": "Notebook",
+--   "Ram": "4",
+--   "OpSys": "Linux",
+--   "Weight": "2.0",
+--   "Price_euros": "389.0",
+--   "Screen": "NormalScreen",
+--   "IPS_Screen": "false",
+--   "Screen_PPI": "141.2119981",
+--   "Cpu_brand": "Intel Core i3",
+--   "HDD": "1000",
+--   "SSD": "0",
+--   "Gpu_brand": "Intel",
+--   "os": "Others/No OS/Linux"
+-- }, {
+
+
+CREATE OR REPLACE TABLE `project-leducthinh-2024.DA04_K300.laptop_price_split`  AS
+SELECT *,
+  CASE
+    WHEN RAND() <= 0.8 THEN 'training'
+    ELSE 'evaluation'
+  END AS split_type
+FROM `project-leducthinh-2024.DA04_K300.laptop_price` 
+
+
+SELECT *  FROM `project-leducthinh-2024.DA04_K300.laptop_price_split` 
+-- [{
+--   "Company": "Asus",
+--   "TypeName": "Notebook",
+--   "Ram": "8",
+--   "OpSys": "Windows 10",
+--   "Weight": "2.0",
+--   "Price_euros": "1224.0",
+--   "Screen": "NormalScreen",
+--   "IPS_Screen": "false",
+--   "Screen_PPI": "141.2119981",
+--   "Cpu_brand": "Intel Core i7",
+--   "HDD": "1000",
+--   "SSD": "256",
+--   "Gpu_brand": "Intel",
+--   "os": "Windows",
+--   "split_type": "training"
+-- }, {
+
+
+
+-- Linear Regression
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.laptop_price_linear_model`
+OPTIONS(model_type='linear_reg', input_label_cols=['Price_euros']) AS
+SELECT 
+  Price_euros,  
+  Ram,
+  Weight,
+  Screen_PPI,
+  HDD,
+  SSD,
+  Company,
+  TypeName,
+  OpSys,
+  Screen,
+  IPS_Screen,
+  Cpu_brand,
+  Gpu_brand
+FROM `project-leducthinh-2024.DA04_K300.laptop_price_split` 
+WHERE split_type = 'training';
+
+-- Mean absolute error 218.6751
+-- Mean squared error 86,462.4659
+-- Mean squared log error 0.0684
+-- Median absolute error 154.8863
+-- R squared 0.7738
+
+
+SELECT *
+FROM ML.EVALUATE(MODEL `project-leducthinh-2024.DA04_K300.laptop_price_linear_model`,
+  (
+    SELECT 
+      Price_euros,
+      Ram,
+      Weight,
+      Screen_PPI,
+      HDD,
+      SSD,
+      Company,
+      TypeName,
+      OpSys,
+      Screen,
+      IPS_Screen,
+      Cpu_brand,
+      Gpu_brand
+    FROM `project-leducthinh-2024.DA04_K300.laptop_price_split`
+    WHERE split_type = 'evaluation'
+  ));
+
+
+
+
+
+-- Boosted Tree Regressor
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.laptop_price_boosted_tree_model`
+OPTIONS(model_type='boosted_tree_regressor', input_label_cols=['Price_euros']) AS
+SELECT 
+  Price_euros,
+  Ram,
+  Weight,
+  Screen_PPI,
+  HDD,
+  SSD,
+  Company,
+  TypeName,
+  OpSys,
+  Screen,
+  IPS_Screen,
+  Cpu_brand,
+  Gpu_brand
+FROM `project-leducthinh-2024.DA04_K300.laptop_price_split`
+WHERE split_type = 'training';
+
+
+-- Mean absolute error 193.9962
+-- Mean squared error 75,213.5753
+-- Mean squared log error 0.0514
+-- Median absolute error 131.2327
+-- R squared 0.8032
+
+SELECT *
+FROM ML.EVALUATE(MODEL `project-leducthinh-2024.DA04_K300.laptop_price_boosted_tree_model`,
+  (
+    SELECT 
+      Price_euros,
+      Ram,
+      Weight,
+      Screen_PPI,
+      HDD,
+      SSD,
+      Company,
+      TypeName,
+      OpSys,
+      Screen,
+      IPS_Screen,
+      Cpu_brand,
+      Gpu_brand
+    FROM `project-leducthinh-2024.DA04_K300.laptop_price_split`
+    WHERE split_type = 'evaluation'
+  ));
+
+
+
+
+SELECT *
+FROM ML.PREDICT(MODEL `project-leducthinh-2024.DA04_K300.laptop_price_boosted_tree_model`,
+  (
+    SELECT 
+      8 AS Ram,
+      1.5 AS Weight,
+      141.21 AS Screen_PPI,
+      512 AS SSD,
+      0 AS HDD,
+      'Dell' AS Company,
+      'Notebook' AS TypeName,
+      'Windows' AS OpSys,
+      'NormalScreen' AS Screen,
+      TRUE AS IPS_Screen,
+      'Intel Core i5' AS Cpu_brand,
+      'Intel' AS Gpu_brand
+  ));
+
