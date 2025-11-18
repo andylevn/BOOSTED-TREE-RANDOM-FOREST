@@ -1,0 +1,95 @@
+
+
+-- BÀI BOOSTED TREE - CLASSIFIER
+
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.titanic_train_boostedtree_classifier_model`
+OPTIONS(MODEL_TYPE = 'BOOSTED_TREE_CLASSIFIER',
+        NUM_PARALLEL_TREE = 2,
+        -- BOOSTER_TYPE = 'GBTREE',
+        -- EARLY_STOP = TRUE,
+        INPUT_LABEL_COLS =['Survived']
+
+  ) AS
+SELECT 
+  Survived,
+  Pclass,
+  Sex,
+  Age,
+  SibSp,
+  Parch,
+  Fare,
+  Embarked
+
+FROM `project-leducthinh-2024.DA04_K300.titanic_train`
+
+
+SELECT *
+FROM ML.EVALUATE(MODEL  `project-leducthinh-2024.DA04_K300.titanic_train_boostedtree_classifier_model`)
+
+
+SELECT *
+FROM ML.PREDICT(MODEL `project-leducthinh-2024.DA04_K300.titanic_train_boostedtree_classifier_model`, 
+(  
+SELECT 
+  Pclass,
+  Sex,
+  Age,
+  SibSp,
+  Parch,
+  Fare,
+  Embarked
+
+FROM `project-leducthinh-2024.DA04_K300.titanic_test`
+WHERE Age >=0
+AND Fare >=0
+))
+
+-- RANDOM FOREST
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.titanic_train_randomforest_model`
+OPTIONS(MODEL_TYPE = 'RANDOM_FOREST_CLASSIFIER',
+        NUM_PARALLEL_TREE = 2,
+        -- BOOSTER_TYPE = 'GBTREE',
+        -- EARLY_STOP = TRUE,
+        INPUT_LABEL_COLS =['Survived']
+
+  ) AS
+SELECT 
+  Survived,
+  Pclass,
+  Sex,
+  Age,
+  SibSp,
+  Parch,
+  Fare,
+  Embarked
+
+FROM `project-leducthinh-2024.DA04_K300.titanic_train`
+
+
+
+SELECT *
+FROM ML.EVALUATE(MODEL `project-leducthinh-2024.DA04_K300.titanic_train_randomforest_model`)
+
+
+SELECT *
+FROM ML.CONFUSION_MATRIX(MODEL `project-leducthinh-2024.DA04_K300.titanic_train_randomforest_model`)
+
+SELECT *
+FROM ML.ROC_CURVE(MODEL  `project-leducthinh-2024.DA04_K300.titanic_train_randomforest_model`)
+
+SELECT *
+FROM ML.PREDICT(MODEL `project-leducthinh-2024.DA04_K300.titanic_train_randomforest_model`, 
+(  
+SELECT 
+  Pclass,
+  Sex,
+  Age,
+  SibSp,
+  Parch,
+  Fare,
+  Embarked
+
+FROM `project-leducthinh-2024.DA04_K300.titanic_test`
+WHERE Age >=0
+AND Fare >=0
+))
