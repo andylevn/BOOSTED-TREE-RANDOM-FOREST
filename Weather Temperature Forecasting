@@ -1,0 +1,45 @@
+
+
+
+-- BÀI BOOSTED TREE - REGRESSOR
+
+-- Bài Temperture C
+SELECT COUNT(*) FROM `project-leducthinh-2024.DA04_K300.weather_new`
+
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.weather_boostedtree_model`
+OPTIONS(MODEL_TYPE = 'BOOSTED_TREE_REGRESSOR',
+        NUM_PARALLEL_TREE =2,
+        INPUT_LABEL_COLS =['Temperature_c'])
+AS
+SELECT * EXCEPT(split_dataframe, split_field) -- Bỏ hai cột split_dataframe và split_field.
+FROM `project-leducthinh-2024.DA04_K300.weather_new` 
+WHERE Temperature_c IS NOT NULL -- Loại bỏ các bản ghi có giá trị NULL trong cột Temperature_c.
+AND split_dataframe LIKE 'training' -- Chỉ sử dụng các bản ghi được gắn nhãn 'training' trong cột split_d
+
+
+SELECT *
+FROM ML.EVALUATE(MODEL `project-leducthinh-2024.DA04_K300.weather_boostedtree_model`,
+(SELECT * EXCEPT(split_dataframe, split_field) 
+FROM `project-leducthinh-2024.DA04_K300.weather_new`
+WHERE Temperature_c IS NOT NULL
+AND split_dataframe LIKE 'evaluation') -- Chỉ sử dụng các bản ghi 'evaluation' (20% dữ liệu) từ tập dữ liệu weather_new.
+)
+
+--RANDOM FOREST
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.weather_randomforest_model`
+OPTIONS(MODEL_TYPE = 'RANDOM_FOREST_REGRESSOR',
+        NUM_PARALLEL_TREE =2,
+        INPUT_LABEL_COLS =['Temperature_c'])
+AS
+SELECT * EXCEPT(split_dataframe, split_field) -- Bỏ hai cột split_dataframe và split_field.
+FROM `project-leducthinh-2024.DA04_K300.weather_new` 
+WHERE Temperature_c IS NOT NULL -- Loại bỏ các bản ghi có giá trị NULL trong cột Temperature_c.
+AND split_dataframe LIKE 'training' -- Chỉ sử dụng các bản ghi được gắn nhãn 'training' trong cột split_d
+
+SELECT *
+FROM ML.EVALUATE(MODEL `project-leducthinh-2024.DA04_K300.weather_randomforest_model`,
+(SELECT * EXCEPT(split_dataframe, split_field) 
+FROM `project-leducthinh-2024.DA04_K300.weather_new`
+WHERE Temperature_c IS NOT NULL
+AND split_dataframe LIKE 'evaluation') -- Chỉ sử dụng các bản ghi 'evaluation' (20% dữ liệu) từ tập dữ liệu weather_new.
+)
