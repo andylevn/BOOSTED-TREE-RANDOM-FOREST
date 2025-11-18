@@ -1,0 +1,160 @@
+SELECT * FROM `project-leducthinh-2024.DA04_K300.Marketing_Customer_Data` LIMIT 1
+SELECT COUNT(*) FROM `project-leducthinh-2024.DA04_K300.Marketing_Customer_Data` 
+-- 9134
+-- Không cần chia dữ liệu khi dữ liệu < 10,000 dòng. BigQuery ML sẽ tự động chia.
+
+
+-- Logistic Regression
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.Marketing_Customer_Logistic_Model`
+OPTIONS(
+  MODEL_TYPE = 'LOGISTIC_REG',          -- Sử dụng Logistic Regression
+  INPUT_LABEL_COLS = ['Response'],      -- Biến mục tiêu (label)
+  AUTO_CLASS_WEIGHTS = TRUE             -- Tự động xử lý mất cân bằng dữ liệu
+) AS
+SELECT 
+  Customer_Lifetime_Value,
+  Income,
+  Monthly_Premium_Auto,
+  Total_Claim_Amount,
+  State,
+  Coverage,
+  Location_Code,
+  EmploymentStatus,
+  Gender,
+  Marital_Status,
+  Policy_Type,
+  Number_of_Policies,
+  Renew_Offer_Type,
+  Number_of_Open_Complaints,
+  Months_Since_Policy_Inception,
+  Months_Since_Last_Claim,
+  Sales_Channel,
+  Education,           
+  Vehicle_Class,           
+  Vehicle_Size,            
+  Response                 -- Biến mục tiêu
+FROM `project-leducthinh-2024.DA04_K300.Marketing_Customer_Data`;
+
+
+
+SELECT *
+FROM ML.EVALUATE(
+  MODEL `project-leducthinh-2024.DA04_K300.Marketing_Customer_Logistic_Model`
+);
+
+-- [{
+--   "precision": "0.35828877005347592",
+--   "recall": "0.50950570342205326",
+--   "accuracy": "0.804865150713908",
+--   "f1_score": "0.42072213500784927",
+--   "log_loss": "0.45075649912231552",
+--   "roc_auc": "0.8056673326673327"
+-- }]
+
+SELECT *
+FROM ML.PREDICT(
+  MODEL `project-leducthinh-2024.DA04_K300.Marketing_Customer_Logistic_Model`,
+  (
+    SELECT 
+      Customer_Lifetime_Value,
+      Income,
+      Monthly_Premium_Auto,
+      Total_Claim_Amount,
+      State,
+      Coverage,
+      Location_Code,
+      EmploymentStatus,
+      Gender,
+      Marital_Status,
+      Policy_Type,
+      Number_of_Policies,
+      Renew_Offer_Type,
+      Number_of_Open_Complaints,
+      Months_Since_Policy_Inception,
+      Months_Since_Last_Claim,
+      Sales_Channel,
+      Education,           
+      Vehicle_Class,           
+      Vehicle_Size,            
+      Response                 
+    FROM `project-leducthinh-2024.DA04_K300.Marketing_Customer_Data`
+  )
+);
+
+
+-- Boosted Trees
+CREATE OR REPLACE MODEL `project-leducthinh-2024.DA04_K300.Marketing_Customer_BoostedTree_Model`
+OPTIONS(
+  MODEL_TYPE = 'BOOSTED_TREE_CLASSIFIER', -- Sử dụng mô hình Boosted Trees
+  INPUT_LABEL_COLS = ['Response'],        -- Biến mục tiêu
+  NUM_PARALLEL_TREE = 5,                 -- Số cây chạy song song
+  MAX_ITERATIONS = 100,                  -- Số lần lặp tối đa
+  AUTO_CLASS_WEIGHTS = TRUE              -- Tự động cân bằng dữ liệu mất cân bằng
+) AS
+SELECT 
+  Customer_Lifetime_Value,
+  Income,
+  Monthly_Premium_Auto,
+  Total_Claim_Amount,
+  State,
+  Coverage,
+  Location_Code,
+  EmploymentStatus,
+  Gender,
+  Marital_Status,
+  Policy_Type,
+  Number_of_Policies,
+  Renew_Offer_Type,
+  Number_of_Open_Complaints,
+  Months_Since_Policy_Inception,
+  Months_Since_Last_Claim,
+  Sales_Channel,
+  Education,           
+  Vehicle_Class,           
+  Vehicle_Size,            
+  Response       
+FROM `project-leducthinh-2024.DA04_K300.Marketing_Customer_Data`;
+
+
+SELECT *
+FROM ML.EVALUATE(
+  MODEL `project-leducthinh-2024.DA04_K300.Marketing_Customer_BoostedTree_Model`
+);
+-- [{
+--   "precision": "0.801829268292683",
+--   "recall": "1.0",
+--   "accuracy": "0.96562665256478053",
+--   "f1_score": "0.89001692047377323",
+--   "log_loss": "0.10866704276263388",
+--   "roc_auc": "0.99907692307692308"
+-- }]
+
+SELECT *
+FROM ML.PREDICT(
+  MODEL `project-leducthinh-2024.DA04_K300.Marketing_Customer_BoostedTree_Model`,
+  (
+    SELECT 
+  Customer_Lifetime_Value,
+  Income,
+  Monthly_Premium_Auto,
+  Total_Claim_Amount,
+  State,
+  Coverage,
+  Location_Code,
+  EmploymentStatus,
+  Gender,
+  Marital_Status,
+  Policy_Type,
+  Number_of_Policies,
+  Renew_Offer_Type,
+  Number_of_Open_Complaints,
+  Months_Since_Policy_Inception,
+  Months_Since_Last_Claim,
+  Sales_Channel,
+  Education,           
+  Vehicle_Class,           
+  Vehicle_Size                
+    FROM `project-leducthinh-2024.DA04_K300.Marketing_Customer_Data`
+  )
+);
+
